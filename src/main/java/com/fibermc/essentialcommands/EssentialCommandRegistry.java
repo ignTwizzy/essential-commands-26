@@ -754,6 +754,50 @@ public final class EssentialCommandRegistry {
 
 
 
+        // /world command to switch dimensions
+        rootNode.addChild(Commands.literal("world")
+            .requires(ECPerms.require("essentialcommands.world", 2))
+            .then(Commands.literal("overworld")
+                .executes(context -> {
+                    var player = context.getSource().getPlayerOrException();
+                    var server = context.getSource().getServer();
+                    var level = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
+                    if (level == null) { context.getSource().sendFailure(Component.literal("Overworld not found")); return 0; }
+                    // From nether: multiply by 8. From elsewhere: keep coords.
+                    boolean fromNether = player.level().dimension().equals(net.minecraft.world.level.Level.NETHER);
+                    double x = fromNether ? player.getX() * 8.0 : player.getX();
+                    double z = fromNether ? player.getZ() * 8.0 : player.getZ();
+                    player.teleportTo(level, x, player.getY(), z, java.util.Set.of(), player.getYRot(), player.getXRot(), true);
+                    context.getSource().sendSuccess(() -> Component.literal("Teleported to the Overworld"), false);
+                    return 1;
+                }))
+            .then(Commands.literal("nether")
+                .executes(context -> {
+                    var player = context.getSource().getPlayerOrException();
+                    var server = context.getSource().getServer();
+                    var level = server.getLevel(net.minecraft.world.level.Level.NETHER);
+                    if (level == null) { context.getSource().sendFailure(Component.literal("Nether not found")); return 0; }
+                    // From overworld: divide by 8. From elsewhere: keep coords.
+                    boolean fromOverworld = player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD);
+                    double x = fromOverworld ? player.getX() / 8.0 : player.getX();
+                    double z = fromOverworld ? player.getZ() / 8.0 : player.getZ();
+                    player.teleportTo(level, x, player.getY(), z, java.util.Set.of(), player.getYRot(), player.getXRot(), true);
+                    context.getSource().sendSuccess(() -> Component.literal("Teleported to the Nether"), false);
+                    return 1;
+                }))
+            .then(Commands.literal("end")
+                .executes(context -> {
+                    var player = context.getSource().getPlayerOrException();
+                    var server = context.getSource().getServer();
+                    var level = server.getLevel(net.minecraft.world.level.Level.END);
+                    if (level == null) { context.getSource().sendFailure(Component.literal("The End not found")); return 0; }
+                    // Always teleport to main End island spawn point
+                    player.teleportTo(level, 100, 50, 0, java.util.Set.of(), player.getYRot(), player.getXRot(), true);
+                    context.getSource().sendSuccess(() -> Component.literal("Teleported to The End"), false);
+                    return 1;
+                }))
+            .build());
+
         rootNode.addChild(essentialCommandsRootNode);
 
         if (!excludedTopLevelCommands.isEmpty() && CONFIG.REGISTER_TOP_LEVEL_COMMANDS) {
