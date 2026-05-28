@@ -681,6 +681,91 @@ public final class EssentialCommandRegistry {
 
         }
 
+
+        // Gamemode shortcuts
+        rootNode.addChild(Commands.literal("gmc")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                var player = context.getSource().getPlayerOrException();
+                player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+                context.getSource().sendSuccess(() -> Component.literal("Set gamemode to Creative"), false);
+                return 1;
+            }).build());
+
+        rootNode.addChild(Commands.literal("gms")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                var player = context.getSource().getPlayerOrException();
+                player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                context.getSource().sendSuccess(() -> Component.literal("Set gamemode to Survival"), false);
+                return 1;
+            }).build());
+
+        rootNode.addChild(Commands.literal("gma")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                var player = context.getSource().getPlayerOrException();
+                player.setGameMode(net.minecraft.world.level.GameType.ADVENTURE);
+                context.getSource().sendSuccess(() -> Component.literal("Set gamemode to Adventure"), false);
+                return 1;
+            }).build());
+
+        rootNode.addChild(Commands.literal("gmsp")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                var player = context.getSource().getPlayerOrException();
+                player.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+                context.getSource().sendSuccess(() -> Component.literal("Set gamemode to Spectator"), false);
+                return 1;
+            }).build());
+
+        // /sethome alias
+        if (CONFIG.ENABLE_HOME) {
+            rootNode.addChild(Commands.literal("sethome")
+                .requires(ECPerms.require(ECPerms.Registry.home_set, 0))
+                .executes(new HomeSetCommand()::runDefault)
+                .then(argument("home_name", StringArgumentType.word())
+                    .executes(new HomeSetCommand()))
+                .build());
+
+            rootNode.addChild(Commands.literal("delhome")
+                .requires(ECPerms.require(ECPerms.Registry.home_delete, 0))
+                .then(argument("home_name", StringArgumentType.word())
+                    .suggests(HomeCommand.Suggestion.LIST_SUGGESTION_PROVIDER)
+                    .executes(new HomeDeleteCommand()))
+                .build());
+        }
+
+        // /god alias for invuln
+        if (CONFIG.ENABLE_INVULN) {
+            rootNode.addChild(Commands.literal("god")
+                .requires(ECPerms.require(ECPerms.Registry.invuln_self, 2))
+                .executes(new InvulnCommand())
+                .build());
+        }
+
+        // /vanish command
+        rootNode.addChild(Commands.literal("vanish")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                var player = context.getSource().getPlayerOrException();
+                boolean isInvisible = player.isInvisible();
+                player.setInvisible(!isInvisible);
+                // Hide/show from all other players
+                var server = context.getSource().getServer();
+                for (var p : server.getPlayerList().getPlayers()) {
+                    if (!p.equals(player)) {
+                        if (!isInvisible) {
+                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(player.getId()));
+                        } else {
+                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(player, server.registryAccess()));
+                        }
+                    }
+                }
+                context.getSource().sendSuccess(() -> Component.literal(isInvisible ? "You are now visible" : "You are now vanished"), false);
+                return 1;
+            }).build());
+
         rootNode.addChild(essentialCommandsRootNode);
 
         if (!excludedTopLevelCommands.isEmpty() && CONFIG.REGISTER_TOP_LEVEL_COMMANDS) {
