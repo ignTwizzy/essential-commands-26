@@ -744,26 +744,7 @@ public final class EssentialCommandRegistry {
                 .build());
         }
 
-        // /vanish command
-        rootNode.addChild(Commands.literal("vanish")
-            .requires(ECPerms.require("essentialcommands.vanish", 2))
-            .executes(context -> {
-                var player = context.getSource().getPlayerOrException();
-                boolean isInvisible = player.isInvisible();
-                player.setInvisible(!isInvisible);
-                var server = context.getSource().getServer();
-                for (var p : server.getPlayerList().getPlayers()) {
-                    if (!p.equals(player)) {
-                        if (!isInvisible) {
-                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(player.getId()));
-                        } else {
-                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(player));
-                        }
-                    }
-                }
-                context.getSource().sendSuccess(() -> Component.literal(isInvisible ? "You are now visible" : "You are now vanished"), false);
-                return 1;
-            }).build());
+
 
         rootNode.addChild(essentialCommandsRootNode);
 
