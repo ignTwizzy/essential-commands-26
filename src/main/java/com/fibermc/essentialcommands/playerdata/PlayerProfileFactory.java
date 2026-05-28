@@ -1,0 +1,64 @@
+package com.fibermc.essentialcommands.playerdata;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+
+import com.fibermc.essentialcommands.EssentialCommands;
+import com.fibermc.essentialcommands.util.FileUtil;
+import org.apache.logging.log4j.Level;
+
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.server.level.ServerPlayer;
+
+public final class PlayerProfileFactory {
+    private PlayerProfileFactory() {}
+
+    private static PlayerProfile create(ServerPlayer player, File playerDataFile) {
+        PlayerProfile pData = new PlayerProfile(player, playerDataFile);
+
+        boolean fileExisted = false;
+
+        try {
+            fileExisted = !playerDataFile.createNewFile();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        if (fileExisted && playerDataFile.length() != 0) {
+            try {
+                pData.fromNbt(NbtIo.readCompressed(playerDataFile.toPath(), NbtAccounter.unlimitedHeap()));
+            } catch (IOException e) {
+                EssentialCommands.log(
+                    Level.WARN,
+                    "Failed to load essential_commands player profile for {}", player.getName().getString());
+                e.printStackTrace();
+            }
+        } else {
+            pData.setDirty();
+            pData.save(Objects.requireNonNull(player.level().getServer()).registryAccess());
+        }
+
+        return pData;
+    }
+
+    public static PlayerProfile create(ServerPlayer player) {
+        try {
+            return create(player, getPlayerProfileFile(player));
+        } catch (IOException ex) {
+            EssentialCommands.log(
+                Level.ERROR,
+                "Failed to create player profile file for player with id '{}'. Player profile may fail to save, or other unexpected behavior may occur.",
+                player.getStringUUID());
+            EssentialCommands.LOGGER.error(ex);
+        }
+        return new PlayerProfile(player, null);
+    }
+
+    private static File getPlayerProfileFile(ServerPlayer player) throws IOException {
+        return FileUtil.getOrCreateWorldDirectory(player.level().getServer(), "ec_player_profiles")
+            .resolve(player.getStringUUID() + ".dat")
+            .toFile();
+    }
+}
