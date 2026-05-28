@@ -684,7 +684,7 @@ public final class EssentialCommandRegistry {
 
         // Gamemode shortcuts
         rootNode.addChild(Commands.literal("gmc")
-            .requires(source -> source.hasPermission(2))
+            .requires(ECPerms.require("essentialcommands.gamemode", 2))
             .executes(context -> {
                 var player = context.getSource().getPlayerOrException();
                 player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
@@ -693,7 +693,7 @@ public final class EssentialCommandRegistry {
             }).build());
 
         rootNode.addChild(Commands.literal("gms")
-            .requires(source -> source.hasPermission(2))
+            .requires(ECPerms.require("essentialcommands.gamemode", 2))
             .executes(context -> {
                 var player = context.getSource().getPlayerOrException();
                 player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
@@ -702,7 +702,7 @@ public final class EssentialCommandRegistry {
             }).build());
 
         rootNode.addChild(Commands.literal("gma")
-            .requires(source -> source.hasPermission(2))
+            .requires(ECPerms.require("essentialcommands.gamemode", 2))
             .executes(context -> {
                 var player = context.getSource().getPlayerOrException();
                 player.setGameMode(net.minecraft.world.level.GameType.ADVENTURE);
@@ -711,7 +711,7 @@ public final class EssentialCommandRegistry {
             }).build());
 
         rootNode.addChild(Commands.literal("gmsp")
-            .requires(source -> source.hasPermission(2))
+            .requires(ECPerms.require("essentialcommands.gamemode", 2))
             .executes(context -> {
                 var player = context.getSource().getPlayerOrException();
                 player.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
@@ -746,19 +746,18 @@ public final class EssentialCommandRegistry {
 
         // /vanish command
         rootNode.addChild(Commands.literal("vanish")
-            .requires(source -> source.hasPermission(2))
+            .requires(ECPerms.require("essentialcommands.vanish", 2))
             .executes(context -> {
                 var player = context.getSource().getPlayerOrException();
                 boolean isInvisible = player.isInvisible();
                 player.setInvisible(!isInvisible);
-                // Hide/show from all other players
                 var server = context.getSource().getServer();
                 for (var p : server.getPlayerList().getPlayers()) {
                     if (!p.equals(player)) {
                         if (!isInvisible) {
                             p.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(player.getId()));
                         } else {
-                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(player, server.registryAccess()));
+                            p.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(player));
                         }
                     }
                 }
