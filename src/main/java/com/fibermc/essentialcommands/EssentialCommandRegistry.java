@@ -728,6 +728,14 @@ public final class EssentialCommandRegistry {
                     .executes(new HomeSetCommand()))
                 .build());
 
+            rootNode.addChild(Commands.literal("homes")
+                .requires(ECPerms.require(ECPerms.Registry.home_tp, 0))
+                .executes(ListCommandFactory.create(
+                    ECText.getInstance().getString("cmd.home.list.start"),
+                    "home tp",
+                    HomeCommand.Suggestion::getSuggestionEntries))
+                .build());
+
             rootNode.addChild(Commands.literal("delhome")
                 .requires(ECPerms.require(ECPerms.Registry.home_delete, 0))
                 .then(argument("home_name", StringArgumentType.word())
